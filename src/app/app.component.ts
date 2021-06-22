@@ -1,8 +1,9 @@
 import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import {Map, Control, DomUtil, MapOptions, tileLayer, latLng, marker, icon, LocationEvent} from 'leaflet';
+import {CRS,Map, Control, DomUtil, MapOptions, tileLayer, latLng, marker, icon, LocationEvent, GeoJSON , } from 'leaflet';
 import { Subscription } from 'rxjs';
 import { MapService } from './components/map/map.service';
+import  'leaflet-wfst'
 
 @Component({
   selector: 'app-root',
@@ -11,6 +12,18 @@ import { MapService } from './components/map/map.service';
 })
 export class AppComponent {
 
+  // private wfstOptions = {
+  //   crs: CRS.EPSG4326,
+  //   showExisting:true,
+  //   url:``,
+  //   count:90,
+  //   request: 'GetFeature',
+  //   service: 'WFS',
+  //   typeName: 'statemap:jerstatemapsimple',
+  //   version: '2.0.0',
+  //   opacity: 1
+  // }
+  // public layer= new WFST(this.wfstOptions)
   //map variables
   public rtr!:Router
   public map: Map[]=[]
@@ -19,7 +32,8 @@ export class AppComponent {
   
   public map1options:MapOptions = {
     layers: [
-      tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' })
+      tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' }),
+      // this.layer
     ],
     zoomControl: false,
     zoom: 5,

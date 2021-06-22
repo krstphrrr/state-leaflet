@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy, Input, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import {Map, Control, DomUtil, ControlPosition, LatLng, DomEvent} from 'leaflet';
+import { MapService } from '../map/map.service';
 
 declare module 'leaflet' {
   interface Control {
@@ -21,47 +22,51 @@ declare module 'leaflet' {
 })
 export class CustomControlComponent implements OnInit, OnDestroy, AfterViewInit {
   private _map!: Map;
-  public custom!: Control;
+  private preCustom!:any 
+  private custom!: Control;
   private _div!:HTMLElement|null
+  private mapSubscribe:Subscription
   
-  @Input() position: ControlPosition = "topleft"
+  private position: ControlPosition = "topleft"
 
-  constructor( private changeDetector: ChangeDetectorRef) { 
+  constructor( private mapService: MapService) { 
+    this.mapSubscribe = this.mapService.map$.subscribe(map=>{
+
+      if (map){
+        this._map = map;
+        let _div = DomUtil.get('custom') 
+        this.preCustom = Control.extend({
+          onAdd(map: Map){
+            if(_div){
+              DomEvent.disableClickPropagation(_div)
+              return _div
+            } else {
+              return _div
+            }
+          },
+          onRemove(map: Map) {}
+        });
+      }
+    })
   }
   ngAfterViewInit(): void {
-    this.map
+    this.custom=new this.preCustom({
+      position: this.position
+    }).addTo(this._map); 
   }
 
   ngOnInit() {
-    // this.currentLocation = new LocData();
+
   }
   
 
   ngOnDestroy() {
-    this._map.removeControl(this.custom);
-    // this._map.off('click', this.onClick);
-  }
-
-  @Input() set map(map: Map){
-    if (map){
-      this._map = map;
-      let _div = DomUtil.get('custom') 
-      let Custom = Control.extend({
-        onAdd(map: Map){
-          if(_div){
-            DomEvent.disableClickPropagation(_div)
-            return _div
-          } else {
-            return _div
-          }
-        },
-        onRemove(map: Map) {}
-      });
-      this.custom=new Custom({
-          position: this.position
-        }).addTo(map);
-      
+    this.mapSubscribe.unsubscribe()
+    if(this._map){
+      this._map.removeControl(this.custom);
     }
   }
+
+
 
 }

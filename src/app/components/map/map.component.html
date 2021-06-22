@@ -1,10 +1,14 @@
-<div 
-class="map-container" 
-leaflet
- [leafletOptions]="options"
- (leafletMapReady)="onMapReady($event)" >
-  
 
+<div class="container">
+  <div 
+  id="map-container" 
+  leaflet
+   [leafletOptions]="options"
+   (leafletMapReady)="onMapReady($event)" >
+
+  </div>
+  <app-custom-control></app-custom-control>
 </div>
+
 
 

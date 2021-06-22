@@ -18,23 +18,27 @@ declare module 'leaflet' {
   styleUrls: ['./map.component.sass']
 })
 export class MapComponent implements OnInit,OnDestroy  {
-  @Output() map$: EventEmitter<Map> = new EventEmitter;
-  @Output() zoom$: EventEmitter<number> = new EventEmitter;
-  @Input() options!: MapOptions 
+
+  public options!: MapOptions 
   public map!: Map;
-  private zoom!: number;
-  private loadingOptions: any={
-    position: 'topleft',
-    zoomControl: false,
-  };
+
   constructor(
     private mapService: MapService
   ) {
+    
     
    }
   
 
   ngOnInit(){
+    this.options = {
+      layers: [
+        tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' }),
+      ],
+      zoomControl: false,
+      zoom: 5,
+      center: latLng(34.125448,-106.079642)
+    };
 
     // Use a compact attribution control for small map container widths
     
@@ -45,21 +49,14 @@ export class MapComponent implements OnInit,OnDestroy  {
   }
 
   ngOnDestroy(): void {
-    this.map.clearAllEventListeners()
-    this.map.remove();
+
   }
 
   onMapReady(map: Map) {
+    map = map.invalidateSize()
     this.map = map;
-    this.map$.emit(map);
-    
-    
-    // this.mapService.receiveMap(this.map)
-  }
+    this.mapService.receiveMap(map)
 
-  // onMapZoomEnd(e: ZoomAnimEvent) {
-  //   this.zoom = e.target.getZoom();
-  //   this.zoom$.emit(this.zoom);
-  // }
+  }
 
 }

@@ -10,17 +10,12 @@ import { BehaviorSubject, Observable, Subject } from 'rxjs';
 })
 
 export class MapService{
-  private map = new Subject()
-  private mapUpdate = new BehaviorSubject<any>("a")
-  map$:Observable<any>= this.mapUpdate.asObservable()
 
-
-  getMap(){
-    return this.map$
-  }
+  // private map = new Subject()
+  private mapUpdate = new BehaviorSubject<Map|null>(null)
+  public map$:Observable<any>= this.mapUpdate.asObservable()
 
   receiveMap(map:Map){
-    
     this.mapUpdate.next(map)
   }
 }

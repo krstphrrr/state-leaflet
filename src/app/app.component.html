@@ -1,13 +1,16 @@
-<mat-sidenav-container>
+<mat-sidenav-container >
 
   <mat-sidenav #sidenav role="navigation">
     <app-sidenav-list (closeSidenav)="sidenav.close()"></app-sidenav-list>
   </mat-sidenav>
 
   <mat-sidenav-content style="overflow-y: hidden;">
-    <app-header (sidenavToggle)="sidenav.toggle()"></app-header>
+    <app-header (sidenavToggle)="sidenav.toggle()" ></app-header>
     
-    <div class="container" *ngIf="rtr.url==='/map'">
+      <router-outlet></router-outlet>
+
+    
+    <!-- <div class="container" *ngIf="rtr.url==='/map'">
       <app-map 
       [options]="map1options"
       (map$)="receiveMap($event, '1')"
@@ -17,8 +20,8 @@
       <app-custom-control
       [map]='map[1]'
         ></app-custom-control>
-      
-    </div>
+       -->
+    <!-- </div> -->
     
     
   </mat-sidenav-content>
