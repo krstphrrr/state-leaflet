@@ -13,6 +13,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { LeafletModule} from '@asymmetrik/ngx-leaflet';
 import { CustomControlComponent } from './components/custom-control/custom-control.component';
+import { HttpClientModule } from '@angular/common/http';
 
 
 @NgModule({
@@ -31,7 +32,8 @@ import { CustomControlComponent } from './components/custom-control/custom-contr
     MaterialModule,
     AppRoutingModule,
     FlexLayoutModule,
-    LeafletModule
+    LeafletModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]
