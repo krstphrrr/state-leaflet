@@ -28,8 +28,15 @@ export class CustomControlComponent implements OnInit, OnDestroy, AfterViewInit 
   private mapSubscribe:Subscription
   
   private position: ControlPosition = "topleft"
+  private layerLoaded: Subscription;
+  public layerReady:boolean = true
 
   constructor( private mapService: MapService) { 
+    this.layerLoaded = this.mapService.layerReady$.subscribe(loaded=>{
+      if(loaded){
+        this.enabling()
+      }
+    })
     this.mapSubscribe = this.mapService.map$.subscribe(map=>{
 
       if (map){
@@ -57,6 +64,14 @@ export class CustomControlComponent implements OnInit, OnDestroy, AfterViewInit 
 
   ngOnInit() {
 
+  }
+
+  enabling(){
+    this.layerReady = !this.layerReady
+  }
+  onCheck(event:any){
+    // console.log(event.checked)
+    this.mapService.mapCheck(event.checked)
   }
   
 

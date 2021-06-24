@@ -1,30 +1,33 @@
-<div class="info-control" id="custom">
-  <mat-card style="background-color: #efdcd5;">
+<div class="info-control" id="custom" fxFlex="2 2 calc(10em + 10px)" fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="30px" style="position:relative;">
+  <!-- <mat-card style="background-color: #efdcd5;"> -->
     <form class="example-form">
       <mat-form-field class="example-full-width">
-        <mat-label>Place search</mat-label>
-        <input matInput placeholder="Ex. New Mexico" value="New Mexico">
+        <mat-label>Geocoder placeholder</mat-label>
+        <input matInput placeholder="Ex. New Mexico">
       </mat-form-field>
     </form>
 
     
 
-  </mat-card>
+  <!-- </mat-card> -->
   <p>
 
   </p><p></p>
   <mat-accordion >
-    <mat-expansion-panel hideToggle style="background-color: #efdcd5">
+    <mat-expansion-panel hideToggle style="background-color: white">
       <mat-expansion-panel-header>
         <mat-panel-title>
-         exp. title
+          <mat-icon>
+            payments
+          </mat-icon>
+          <span class="nav-caption"> Layers</span>
         </mat-panel-title>
-        <mat-panel-description>
-          exp. summary
-        </mat-panel-description>
+        <mat-panel-description></mat-panel-description>
+        
+
       </mat-expansion-panel-header>
 
-      <p>surprise content</p>
+      <mat-checkbox color="primary" (change)="onCheck($event)" [disabled]="layerReady"> WMTS </mat-checkbox>
     </mat-expansion-panel>
   </mat-accordion>
 </div>

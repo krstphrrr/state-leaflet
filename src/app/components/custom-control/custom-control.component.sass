@@ -1,5 +1,20 @@
+@mixin border-radius($radius)
+  -webkit-border-radius: $radius
+  -mox-border-radius: $radius
+  -ms-border-radius: $radius
+  border-radius: $radius
+  
+  
 .info-control 
-  background:rgba(0, 2, 1, 0.9)
+  @include border-radius($radius:5px)
+  
+  background-color: rgba(0, 2, 1, 0.13)
   color: black
 
 
+.example-full-width
+  background-color: white
+  position: absolute
+  left: 0
+  right:0
+  margin-top: 10px
