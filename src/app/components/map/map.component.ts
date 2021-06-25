@@ -1,18 +1,10 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
-import { Map, Control, Layer, MapOptions, tileLayer, latLng, GeoJSON, geoJSON, TileLayer, GeoJSONOptions, Polygon, PolylineOptions, PathOptions} from 'leaflet';
+import { Map, Control, Layer, MapOptions, tileLayer, latLng, GeoJSON, geoJSON, TileLayer, GeoJSONOptions, Polygon, PolylineOptions, PathOptions, Util} from 'leaflet';
 import { MapService } from './map.service';
-import { HttpClient} from '@angular/common/http';
+import { HttpClient, HttpParams} from '@angular/common/http';
 import { Subscription } from 'rxjs';
+import { LayerService } from './layer.service';
 
-declare module 'leaflet' {
-  interface Control {
-     _addTo(map: Map): Control;
-  }
-  interface Map {
-    _leaflet_id: number;
-    _container: HTMLElement;
-  }
-}
 
 @Component({
   selector: 'app-map',
@@ -25,20 +17,30 @@ export class MapComponent implements OnInit,OnDestroy  {
   public map!: Map;
   private tileURL:string = "https://landscapedatacommons.org/geoserver/statemap/wms?"
   public wmsTile!:TileLayer
-  // public testOptions:any = {
-  //   service:"wfs",
-  //   version:'2.0.0',
-  //   request:'GetFeature',
-  //   typeNames:'statemap:jerstatemapsimple',
-  //   srsName: 'EPSG:4326',
-  //   ouputFormat: 'application/json'
-  // }
+  
+  private wfsUrl:string = 'https://landscapedatacommons.org/geoserver/statemap/wfs'
+  public wfsOptions = {
+    service:"wfs",
+    version:'2.0.0',
+    request:'GetFeature',
+    count:1,
+    typeNames:'statemap:jerstatemapsimple',
+    srsName: 'EPSG:4326',
+    outputFormat: 'application/json'
+  }
+  private url1 = 'https://landscapedatacommons.org/geoserver/statemap/wfs?service=wfs&version=2.0.0&request=GetFeature&count=1&typeNames=statemap:jerstatemapsimple&srsName=EPSG:4326&outputFormat=application/json'
+  private url2 = 'https://landscapedatacommons.org/geoserver/statemap/wfs?service=wfs&version=2.0.0&request=GetFeature&count=100&typeNames=statemap:jerstatemapsimple&srsName=EPSG:4326&ouputFormat=application/json'
+  private parameters = Util.extend(this.wfsOptions)
+  private preppedParams = new HttpParams({fromObject:this.parameters})
+  // private URL = this.wfsUrl + Util.getParamString(this.parameters)
+  private properGeo = geoJSON()
   // public testLayer:any =geoJSON('https://landscapedatacommons.org/geoserver/statemap/wfs')
   public json:any
   /// polygon editing test
   public testLayer:any 
   private checkboxSub!:Subscription
 
+  
   private geoJSONStyle:GeoJSONOptions= {
     style:{
       "fillColor":"black",
@@ -46,39 +48,28 @@ export class MapComponent implements OnInit,OnDestroy  {
       "color":"black",
       "opacity":0.2
     },
-    onEachFeature:this.onEachFeature
+    onEachFeature:this.layerServ.onEachFeature
 
   }
-  private highlightStyle:{} = {
-    "color": "yellow",
-    "fillOpacity":0.5,
-    "fillColor":"orange"
-  }
-  private resetStyle= {
-    "color": "black",
-    "fillOpacity":0.2,
-    "fillColor":"black"
-  }
+  
+  
 
-  // ?service=WMS&
-  // version=1.1.0&
-  // request=GetMap&layers=
-  // statemap%3Ajerstatemapsimple
-  // srs=EPSG%3A32613&format=application/openlayers
   constructor(
     private mapService: MapService,
-    private http:HttpClient
+    private http:HttpClient,
+    private layerServ: LayerService
   ) {
-    this.http.get('https://landscapedatacommons.org/geoserver/statemap/wfs?service=wfs&version=2.0.0&request=GetFeature&typeNames=statemap:jerstatemapsimple&srsName=EPSG:4326&outputFormat=application/json').subscribe(json=>{
-      // console.log(json)
+    
+    this.http.get(this.wfsUrl, {params:this.preppedParams})
+      .subscribe(json=>{
+      
       this.json = json
       this.testLayer = geoJSON(this.json, this.geoJSONStyle)
       console.log(this.testLayer)
       this.testLayer.on("data:loaded",this.layerLoad())
-      // if(this.testLayer && this.map){
-      //   this.testLayer.addTo(this.map)
-      // }
-    })
+
+    }, error => console.log(error))
+    
     this.checkboxSub = this.mapService.wmsTile$.subscribe(check=>{
       this.tileCheck(check)
     })
@@ -98,34 +89,7 @@ export class MapComponent implements OnInit,OnDestroy  {
      this.mapService.layerCheck(true)
    }
 
-   onEachFeature(feature:any,layer:Polygon){
-    
-    function randomColor():string {
-      let poss = ["orange", "green", "blue", "purle", "red","yellow","white","pink","teal"]
-      function getRandomInt(max:any) {
-        return Math.floor(Math.random() * max);
-      }
-      return poss[getRandomInt(9)]
-    }
-    layer.on("mouseover", (e) =>{
-      // console.log(randomColor())
-      layer.setStyle({
-        "color": "black",
-        "fillOpacity":0.5,
-        "fillColor":randomColor(),
-        "opacity":1
-
-      })
-    })
-    layer.on("mouseout", (e)=>{
-      layer.setStyle({
-        "color": "black",
-        "fillOpacity":0.2,
-        "fillColor":"black",
-        "opacity":0.2
-      })
-    })
-   }
+   
   
 
   ngOnInit(){
@@ -162,6 +126,7 @@ export class MapComponent implements OnInit,OnDestroy  {
     }
   }
 
+  
   ngOnDestroy(): void {
     this.checkboxSub.unsubscribe()
   }
@@ -195,3 +160,5 @@ export class MapComponent implements OnInit,OnDestroy  {
   }
 
 }
+// https://landscapedatacommons.org/geoserver/statemap/wfs?service=wfs&version=2.0.0&request=GetFeature&typeNames=statemap:jerstatemapsimple&srsName=EPSG:4326&ouputFormat=application/json
+// https://landscapedatacommons.org/geoserver/statemap/wfs?service=wfs&version=2.0.0&request=GetFeature&typeNames=statemap:jerstatemapsimple&srsName=EPSG:4326&outputFormat=application/json

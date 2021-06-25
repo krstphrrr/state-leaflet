@@ -1,7 +1,7 @@
 
 // import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Map } from 'leaflet';
+import { Map, PathOptions } from 'leaflet';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 // import { tap, map, catchError, delay } from 'rxjs/operators';
 
