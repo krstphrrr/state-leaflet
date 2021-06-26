@@ -15,6 +15,8 @@ import { LeafletModule} from '@asymmetrik/ngx-leaflet';
 import { CustomControlComponent } from './components/custom-control/custom-control.component';
 import { HttpClientModule } from '@angular/common/http';
 
+import { StoreModule } from '@ngrx/store';
+import { checkboxReducer } from './app.reducer';
 
 @NgModule({
   declarations: [
@@ -33,7 +35,8 @@ import { HttpClientModule } from '@angular/common/http';
     AppRoutingModule,
     FlexLayoutModule,
     LeafletModule,
-    HttpClientModule
+    HttpClientModule,
+    StoreModule.forRoot({check:checkboxReducer})
   ],
   providers: [],
   bootstrap: [AppComponent]

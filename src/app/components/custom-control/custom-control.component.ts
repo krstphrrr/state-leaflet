@@ -3,16 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
 import {Map, Control, DomUtil, ControlPosition, LatLng, DomEvent} from 'leaflet';
 import { MapService } from '../map/map.service';
-
-declare module 'leaflet' {
-  interface Control {
-     _addTo(map: Map): Control;
-  }
-  interface Map {
-    _leaflet_id: number;
-    _container: HTMLElement;
-  }
-}
+// ngrx 
+import { Store } from '@ngrx/store'
+import {checked, unchecked} from '../../app.actions'
 
 
 @Component({
@@ -31,7 +24,13 @@ export class CustomControlComponent implements OnInit, OnDestroy, AfterViewInit 
   private layerLoaded: Subscription;
   public layerReady:boolean = true
 
-  constructor( private mapService: MapService) { 
+  check$!: Observable<boolean>
+
+  constructor( 
+    private mapService: MapService,
+    private store: Store<{ check:boolean}>
+    ) { 
+    this.check$ = store.select('check')
     this.layerLoaded = this.mapService.layerReady$.subscribe(loaded=>{
       if(loaded){
         this.enabling()
@@ -62,6 +61,13 @@ export class CustomControlComponent implements OnInit, OnDestroy, AfterViewInit 
     }).addTo(this._map); 
   }
 
+  toCheck(){
+    this.store.dispatch(checked())
+  }
+  toUncheck(){
+    this.store.dispatch(unchecked())
+  }
+
   ngOnInit() {
 
   }
@@ -70,7 +76,14 @@ export class CustomControlComponent implements OnInit, OnDestroy, AfterViewInit 
     this.layerReady = !this.layerReady
   }
   onCheck(event:any){
-    // console.log(event.checked)
+    switch (event.checked){
+      case true:
+        this.toCheck()
+        break 
+      case false:
+        this.toUncheck()
+        break
+    }
     this.mapService.mapCheck(event.checked)
   }
   

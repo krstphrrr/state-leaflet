@@ -2,8 +2,13 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angu
 import { Map, Control, Layer, MapOptions, tileLayer, latLng, GeoJSON, geoJSON, TileLayer, GeoJSONOptions, Polygon, PolylineOptions, PathOptions, Util} from 'leaflet';
 import { MapService } from './map.service';
 import { HttpClient, HttpParams} from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { LayerService } from './layer.service';
+import { MapFactory } from './map.factory';
+import { MapViewProperties } from 'src/app/models/map-view-properties';
+import { Action, Store } from '@ngrx/store';
+import { selectMapViewPropertiesExtent } from './map.selectors';
+import * as MapActions from './map.actions'
 
 
 @Component({
@@ -28,8 +33,7 @@ export class MapComponent implements OnInit,OnDestroy  {
     srsName: 'EPSG:4326',
     outputFormat: 'application/json'
   }
-  private url1 = 'https://landscapedatacommons.org/geoserver/statemap/wfs?service=wfs&version=2.0.0&request=GetFeature&count=1&typeNames=statemap:jerstatemapsimple&srsName=EPSG:4326&outputFormat=application/json'
-  private url2 = 'https://landscapedatacommons.org/geoserver/statemap/wfs?service=wfs&version=2.0.0&request=GetFeature&count=100&typeNames=statemap:jerstatemapsimple&srsName=EPSG:4326&ouputFormat=application/json'
+  
   private parameters = Util.extend(this.wfsOptions)
   private preppedParams = new HttpParams({fromObject:this.parameters})
   // private URL = this.wfsUrl + Util.getParamString(this.parameters)
@@ -39,6 +43,11 @@ export class MapComponent implements OnInit,OnDestroy  {
   /// polygon editing test
   public testLayer:any 
   private checkboxSub!:Subscription
+  private wfsSubs:Subscription
+
+  private mapViewPropertiesSubject: Subject<MapViewProperties> = new Subject
+  private dispatchTriggeredByMap = false;
+  // mapViewPropertiesSubject = new Subject();
 
   
   private geoJSONStyle:GeoJSONOptions= {
@@ -57,22 +66,29 @@ export class MapComponent implements OnInit,OnDestroy  {
   constructor(
     private mapService: MapService,
     private http:HttpClient,
-    private layerServ: LayerService
+    private layerServ: LayerService,
+    private mapFactory: MapFactory,
+    private store: Store
   ) {
+    this.mapFactory.remoteWFSGet()
     
-    this.http.get(this.wfsUrl, {params:this.preppedParams})
-      .subscribe(json=>{
-      
-      this.json = json
-      this.testLayer = geoJSON(this.json, this.geoJSONStyle)
-      console.log(this.testLayer)
-      this.testLayer.on("data:loaded",this.layerLoad())
-
-    }, error => console.log(error))
+    this.wfsSubs = this.mapFactory.wfsLayer$.subscribe(layer=>{
+      this.testLayer = layer
+    })
+    
     
     this.checkboxSub = this.mapService.wmsTile$.subscribe(check=>{
       this.tileCheck(check)
     })
+
+    
+    this.initializeWatch(this.map)
+    this.mapViewPropertiesSubject
+            // .pipe(debounceTime(150))
+            .subscribe((mapViewProperties:MapViewProperties) => {
+                this.dispatchMapAction(MapActions.UpdateMapViewProperties({mapViewProperties: mapViewProperties}));
+                this.dispatchTriggeredByMap = false;
+            });
 
       
 
@@ -88,20 +104,20 @@ export class MapComponent implements OnInit,OnDestroy  {
    layerLoad(){
      this.mapService.layerCheck(true)
    }
+   private dispatchMapAction(action: Action): void {
+    this.dispatchTriggeredByMap = true;
+    try {
+        this.store.dispatch(action);
+    } finally {
+        this.dispatchTriggeredByMap = false;
+    }
+}
 
    
   
 
   ngOnInit(){
-    this.options = {
-      layers: [
-        tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' }),
-        
-      ],
-      zoomControl: false,
-      zoom:12,
-      center: latLng(32.614074531767606, -106.70780181884767)
-    };
+    this.options = this.mapFactory.options
       
   }
 
@@ -145,20 +161,45 @@ export class MapComponent implements OnInit,OnDestroy  {
         console.log("hola")
     }
   }
+  private initializeWatch(map:Map): void {
+    if(map){
+      let obj:MapViewProperties = {
+        center:map.getCenter(),
+        extent:map.getBounds(),
+        zoom:map.getBoundsZoom(map.getBounds())
+      }
+      console.log(obj)
+      this.mapViewPropertiesSubject.next(obj)
+    }
+    // this.mapView.watch('extent', (extent: Extent) => {
+    //     this.mapViewPropertiesSubject.next({
+    //         center: extent.center,
+    //         zoom: this.mapView.zoom,
+    //         extent: extent
+    //     });
+    // });
+}
 
   onMapReady(map: Map) {
     map = map.invalidateSize()
     this.map = map
     this.mapService.receiveMap(map)
-    if(this.map){
-      this.map.on("zoomend", (e)=>{
-        
-        console.log(e.target)
-        console.log(e.target._zoom)
-      })
-    }
+    this.initializeWatch(this.map)
+
+    
+    // if(this.map){
+    //   this.map.on("zoomend", (e)=>{
+    //     this.initializeWatch(this.map)
+    //     console.log(e.target)
+    //     console.log(e.target._zoom)
+    //   })
+    // }
   }
 
+}
+
+function debounceTime(arg0: number): import("rxjs").OperatorFunction<any, unknown> {
+  throw new Error('Function not implemented.');
 }
 // https://landscapedatacommons.org/geoserver/statemap/wfs?service=wfs&version=2.0.0&request=GetFeature&typeNames=statemap:jerstatemapsimple&srsName=EPSG:4326&ouputFormat=application/json
 // https://landscapedatacommons.org/geoserver/statemap/wfs?service=wfs&version=2.0.0&request=GetFeature&typeNames=statemap:jerstatemapsimple&srsName=EPSG:4326&outputFormat=application/json
