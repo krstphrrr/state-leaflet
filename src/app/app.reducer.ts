@@ -17,18 +17,16 @@ const _checkboxReducer = createReducer(
 )
 
 const checkYes=(state:CheckboxState):CheckboxState=>{
-  console.log("1")
   return {
     ...state,
-    check:!state
+    check:true
   }
 }
 
 const checkNo=(state:CheckboxState):CheckboxState=>{
-  console.log("2")
   return {
     ...state,
-    check:!state
+    check:false
   }
 }
 

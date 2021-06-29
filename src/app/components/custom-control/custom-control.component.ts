@@ -21,7 +21,7 @@ export class CustomControlComponent implements OnInit, OnDestroy, AfterViewInit 
   private mapSubscribe:Subscription
   
   private position: ControlPosition = "topleft"
-  private layerLoaded: Subscription;
+  private layerLoaded!: Subscription;
   public layerReady:boolean = true
 
   check$!: Observable<boolean>
@@ -31,11 +31,7 @@ export class CustomControlComponent implements OnInit, OnDestroy, AfterViewInit 
     private store: Store<{ check:boolean}>
     ) { 
     this.check$ = store.select('check')
-    this.layerLoaded = this.mapService.layerReady$.subscribe(loaded=>{
-      if(loaded){
-        this.enabling()
-      }
-    })
+    
     this.mapSubscribe = this.mapService.map$.subscribe(map=>{
 
       if (map){
@@ -69,6 +65,12 @@ export class CustomControlComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   ngOnInit() {
+    this.layerLoaded = this.mapService.layerReady$.subscribe(loaded=>{
+      console.log(loaded)
+      if(loaded){
+        this.enabling()
+      }
+    })
 
   }
 
@@ -89,6 +91,7 @@ export class CustomControlComponent implements OnInit, OnDestroy, AfterViewInit 
   
 
   ngOnDestroy() {
+    console.log("destruido")
     this.mapSubscribe.unsubscribe()
     if(this._map){
       this._map.removeControl(this.custom);

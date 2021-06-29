@@ -1,10 +1,13 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, ElementRef, Renderer2, RendererFactory2 } from '@angular/core';
+import { Store } from '@ngrx/store';
 import { geoJSON, GeoJSONOptions, latLng, tileLayer, TileLayer, Util } from 'leaflet';
 
 import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { LayerService } from './layer.service';
+import { UpdateLoadedTiles } from './map.actions';
 import { MapService } from './map.service';
+import { WebMapTiles } from './map.state';
 
 
 @Injectable({
@@ -39,8 +42,9 @@ export class MapFactory {
   
   public json:any
   
-  public wfsLayer = new Subject
+  public wfsLayer:Subject<WebMapTiles> = new Subject
   public wfsLayer$:Observable<any> = this.wfsLayer.asObservable()
+  public tile$!:Observable<any>
   
 
   options = {
@@ -56,19 +60,27 @@ export class MapFactory {
   constructor(
     private layerServ:LayerService,
     private mapService:MapService,
-    private http: HttpClient
-    ){}
+    private http: HttpClient,
+    private store: Store
+    ){
+      // this.tile$ = store.select('map')
+      
+    }
 
   remoteWFSGet(){
+    
+    
     this.http.get(this.wfsUrl, {params:this.preppedParams})
       .subscribe(json=>{
       
       this.json = json
       let actualLayer:any = geoJSON(this.json, this.geoJSONStyle)
+      
+      console.log(actualLayer)
       this.wfsLayer.next(actualLayer)
       
       actualLayer.on("data:loaded",this.layerLoad())
-
+      // this.store.dispatch(UpdateLoadedTiles(actualLayer))
     }, error => console.log(error))
     
     

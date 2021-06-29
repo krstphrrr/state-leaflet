@@ -2,14 +2,19 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angu
 import { Map, Control, Layer, MapOptions, tileLayer, latLng, GeoJSON, geoJSON, TileLayer, GeoJSONOptions, Polygon, PolylineOptions, PathOptions, Util} from 'leaflet';
 import { MapService } from './map.service';
 import { HttpClient, HttpParams} from '@angular/common/http';
-import { Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { LayerService } from './layer.service';
 import { MapFactory } from './map.factory';
 import { MapViewProperties } from 'src/app/models/map-view-properties';
 import { Action, Store } from '@ngrx/store';
-import { selectMapViewPropertiesExtent } from './map.selectors';
+import { selectCheckbox, selectMapViewPropertiesExtent, selectWebMap } from './map.selectors';
 import * as MapActions from './map.actions'
+import { filter, takeUntil } from 'rxjs/operators';
+// import { WebMapDocument } from './map.state';
 
+interface CheckObj{
+  check:boolean
+}
 
 @Component({
   selector: 'app-map',
@@ -46,8 +51,12 @@ export class MapComponent implements OnInit,OnDestroy  {
   private wfsSubs:Subscription
 
   private mapViewPropertiesSubject: Subject<MapViewProperties> = new Subject
+
   private dispatchTriggeredByMap = false;
   // mapViewPropertiesSubject = new Subject();
+  private check$!: Observable<any>
+  private map$!:Observable<any>
+  public storedOptions!:any
 
   
   private geoJSONStyle:GeoJSONOptions= {
@@ -68,11 +77,24 @@ export class MapComponent implements OnInit,OnDestroy  {
     private http:HttpClient,
     private layerServ: LayerService,
     private mapFactory: MapFactory,
-    private store: Store
+    private store: Store<{check:boolean,map:{}}>
   ) {
+    this.check$=store.select('check')
+    this.map$= store.select('map')
+    this.check$.subscribe((chk)=>{
+      this.tileCheck(chk.check)
+    })
+
+    this.map$.subscribe(e=>{
+      console.log(e)
+      if(e.hasOwnProperty('mapViewProperties')){
+       this.storedOptions = e.mapViewProperties
+      }
+    })
+
     this.mapFactory.remoteWFSGet()
     
-    this.wfsSubs = this.mapFactory.wfsLayer$.subscribe(layer=>{
+    this.wfsSubs = this.store.subscribe(layer=>{
       this.testLayer = layer
     })
     
@@ -90,7 +112,6 @@ export class MapComponent implements OnInit,OnDestroy  {
                 this.dispatchTriggeredByMap = false;
             });
 
-      
 
     this.wmsTile = tileLayer.wms(this.tileURL,{
       layers:"statemap:jerstatemapsimple",
@@ -113,20 +134,34 @@ export class MapComponent implements OnInit,OnDestroy  {
     }
 }
 
-   
+  mapStateRecall(options:{}){
+    if(this.storedOptions){
+      return {
+        ...options,
+        zoom:this.storedOptions.zoom,
+        center:this.storedOptions.center,
+        bounds:this.storedOptions.extent
+      }
+    } else {
+      return this.mapFactory.options
+    }
+    
+  }
+
+  checkStateRecall(){
+  // if(this.)
+  }
   
 
   ngOnInit(){
-    this.options = this.mapFactory.options
-      
+    this.options = this.mapStateRecall(this.mapFactory.options)
+
+    this.mapStateRecall(this.mapFactory.options)
+    
   }
 
   
-  getZoom(map:Map){
-    map.on("tileload",(e)=>{
-      console.log(e)
-    })
-  }
+  
 
   addTile(){
     if(this.map && this.wmsTile){
@@ -168,7 +203,7 @@ export class MapComponent implements OnInit,OnDestroy  {
         extent:map.getBounds(),
         zoom:map.getBoundsZoom(map.getBounds())
       }
-      console.log(obj)
+      
       this.mapViewPropertiesSubject.next(obj)
     }
     // this.mapView.watch('extent', (extent: Extent) => {
@@ -181,19 +216,23 @@ export class MapComponent implements OnInit,OnDestroy  {
 }
 
   onMapReady(map: Map) {
-    map = map.invalidateSize()
+    if(this.store){
+
+    }
     this.map = map
     this.mapService.receiveMap(map)
-    this.initializeWatch(this.map)
+    
 
     
-    // if(this.map){
-    //   this.map.on("zoomend", (e)=>{
-    //     this.initializeWatch(this.map)
-    //     console.log(e.target)
-    //     console.log(e.target._zoom)
-    //   })
-    // }
+    if(this.map){
+      this.map.on("zoomend", (e)=>{
+        this.initializeWatch(this.map)
+        
+        // this.initializeWatch(this.map)
+        // console.log(e.target)
+        // console.log(e.target._zoom)
+      })
+    }
   }
 
 }

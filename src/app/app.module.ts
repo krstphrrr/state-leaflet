@@ -17,6 +17,7 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { StoreModule } from '@ngrx/store';
 import { checkboxReducer } from './app.reducer';
+import { mapReducer } from './components/map/map.reducer';
 
 @NgModule({
   declarations: [
@@ -36,7 +37,7 @@ import { checkboxReducer } from './app.reducer';
     FlexLayoutModule,
     LeafletModule,
     HttpClientModule,
-    StoreModule.forRoot({check:checkboxReducer})
+    StoreModule.forRoot({check:checkboxReducer, map: mapReducer})
   ],
   providers: [],
   bootstrap: [AppComponent]
